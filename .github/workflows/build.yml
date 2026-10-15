@@ -1,0 +1,28 @@
+name: build
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  packages: read
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    services:
+      artifactory:
+        image: ghcr.io/aaron-cog-gtm-gh-org/acme-mock-artifactory:latest
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        ports: ["8081:8081"]
+        env:
+          BLOCKLIST: ${{ vars.ARTIFACTORY_BLOCKLIST }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }   # no maven cache on purpose: a warm cache hides the 403
+      - run: mvn -B -s .mvn/settings.xml verify
+        env:
+          ARTIFACTORY_URL: http://localhost:8081/artifactory/maven-virtual
