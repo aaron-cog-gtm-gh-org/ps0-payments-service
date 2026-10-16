@@ -1,0 +1,10 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0">
+  <mirrors>
+    <mirror>
+      <id>acme-artifactory</id>
+      <name>Acme Artifactory (maven-virtual)</name>
+      <url>${env.ARTIFACTORY_URL}</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+</settings>

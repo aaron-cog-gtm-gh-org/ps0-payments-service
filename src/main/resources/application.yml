@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: payments-service
+
+acme:
+  payments:
+    fx-base-url: http://localhost:8091
+    ledger-base-url: http://localhost:8092
+    timeout: 5s
