@@ -2,3 +2,5 @@ target/
 .idea/
 *.iml
 .DS_Store
+e2e-logs/
+__pycache__/
