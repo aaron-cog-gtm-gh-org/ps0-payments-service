@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SettlementService {
-    public static final BigDecimal SETTLEMENT_FEE = new BigDecimal("2.50");
+    public static final BigDecimal PROCESSING_FEE = new BigDecimal("2.50");
+    public static final BigDecimal FX_FEE_RATE = new BigDecimal("0.0025");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SettlementService.class);
 
@@ -25,25 +26,29 @@ public class SettlementService {
             throw new IllegalArgumentException("Settlement amount must be greater than zero");
         }
 
-        BigDecimal rate = request.sourceCurrency().equals(request.settlementCurrency())
-                ? BigDecimal.ONE
+        boolean sameCurrency = request.sourceCurrency().equals(request.settlementCurrency());
+        BigDecimal rate = sameCurrency ? BigDecimal.ONE
                 : fxRateClient.getRate(request.sourceCurrency(), request.settlementCurrency()).rate();
         BigDecimal converted = request.amount().multiply(rate).setScale(2, RoundingMode.HALF_EVEN);
-        BigDecimal net = converted.subtract(SETTLEMENT_FEE).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal fxFee = sameCurrency ? BigDecimal.ZERO.setScale(2)
+                : converted.multiply(FX_FEE_RATE).setScale(2, RoundingMode.HALF_EVEN);
+        BigDecimal net = converted.subtract(PROCESSING_FEE).subtract(fxFee)
+                .setScale(2, RoundingMode.HALF_EVEN);
         if (net.signum() <= 0) {
-            throw new IllegalArgumentException("Settlement amount must exceed the fee");
+            throw new IllegalArgumentException("Settlement amount must exceed the fees");
         }
 
         String narrative = "Settlement " + request.reference() + ": "
                 + request.amount().setScale(2, RoundingMode.HALF_EVEN).toPlainString() + " "
                 + request.sourceCurrency() + " @ " + rate.toPlainString() + ", fee "
-                + SETTLEMENT_FEE.toPlainString() + " " + request.settlementCurrency();
+                + PROCESSING_FEE.toPlainString() + " + fx " + fxFee.toPlainString() + " "
+                + request.settlementCurrency();
         LedgerPosting posting = new LedgerPosting(request.reference(), request.debitAccount(),
                 request.creditAccount(), net, request.settlementCurrency(), narrative);
 
-        LOGGER.info("Settling {} {} to {}: net {} {}, fee {} {}",
+        LOGGER.info("Settling {} {} to {}: net {} {}, fee {} + fx {} {}",
                 request.amount(), request.sourceCurrency(), request.settlementCurrency(), net,
-                request.settlementCurrency(), SETTLEMENT_FEE, request.settlementCurrency());
+                request.settlementCurrency(), PROCESSING_FEE, fxFee, request.settlementCurrency());
         return ledgerClient.post(posting);
     }
 }
