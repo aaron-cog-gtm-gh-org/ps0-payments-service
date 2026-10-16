@@ -13,6 +13,10 @@ The Payments Service settles payments by converting amounts through the FX rates
 - FX rates: `GET /v1/rates/{from}/{to}`
 - Ledger postings: `POST /v1/postings`
 
+## Settlement console
+
+Open [http://localhost:8090/](http://localhost:8090/) to submit settlements and review balances. The settlement panel calls `POST /v1/settlements` and proxies indicative rates through `GET /console/api/rates/{from}/{to}`. The account balance panel calls `GET /console/api/accounts/{id}/balance`.
+
 ## Configuration
 
 | Property | Description | Default |
