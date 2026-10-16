@@ -661,7 +661,7 @@
 
       const asOf = document.createElement("p");
       asOf.className = "balance-asof";
-      asOf.textContent = `As of ${payload.asOf}`;
+      asOf.textContent = `As of ${payload.asOf} · Refreshed ${new Date().toLocaleTimeString("en-GB")}`;
       balanceResult.append(values, asOf);
     }
 
