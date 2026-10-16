@@ -36,26 +36,3 @@ ARTIFACTORY_URL=http://localhost:8081/artifactory/maven-virtual mvn -B -s .mvn/s
 ```
 
 Dependencies resolve through the Acme Artifactory maven-virtual mirror.
-
-## End-to-end verification console
-
-`e2e/stack_console.py` (Python 3 stdlib only) starts local rate-provider (`:9101`) and core-banking (`:9102`) stubs, launches the three service jars wired to them and to each other, and serves a browser console on `http://localhost:8099`:
-
-```sh
-python3 e2e/stack_console.py \
-  --payments-jar target/payments-service-0.1.0-SNAPSHOT.jar \
-  --fx-jar ../ps0-fx-gateway/target/fx-gateway-0.1.0-SNAPSHOT.jar \
-  --ledger-jar ../ps0-ledger-service/target/ledger-service-0.1.0-SNAPSHOT.jar
-```
-
-Omit a `--*-jar` flag to use a service that is already running on its port. In the console, **Run full verification** checks, with PASS/FAIL for each step:
-
-- that fx-gateway returns the EUR→USD quote;
-- that `POST /v1/settlements` returns a ledger posting receipt;
-- that the payments-service log shows the rate, fees and net amount;
-- that the ledger balance is served live from core banking;
-- that the ledger falls back to the cached balance once the core-banking stub is stopped;
-- that an uncached account returns an error rather than stale data;
-- that the balance is live again after the stub restarts.
-
-The manual panels run single calls. Every call is recorded with its exact request, response and the service log lines it produced. Export the record as Markdown with **Copy as Markdown** or from `/api/transcript.md`. Service logs are also written to `e2e-logs/`.
